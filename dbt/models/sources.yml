@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: public
+    tables:
+      - name: users
+        description: "Raw users data ingested from CSV/MinIO"
+        columns:
+          - name: user_id
+            tests:
+              - not_null
+              - unique
+          - name: email
+            tests:
+              - not_null

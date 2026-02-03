@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: platform
+      POSTGRES_PASSWORD: platform
+      POSTGRES_DB: warehouse
+    ports:
+      - "5432:5432"
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  ingest:
+    build: ./ingest
+    depends_on: [minio]
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+
+  transform:
+    build: ./transform
+    depends_on: [postgres, minio]
+
+  validate:
+    build: ./validate
+    depends_on: [postgres]
+
+  dbt:
+    build: ./dbt
+    depends_on: [postgres]
+
+  # ml:
+  #   build: ./ml
+  #   depends_on: [postgres]
+
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3101:3100"
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      - ./observability/promtail-config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    ports:
+      - "3001:3000"
