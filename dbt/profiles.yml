@@ -4,8 +4,8 @@ dataplatform:
     dev:
       type: postgres
       host: postgres
-      user: analytics
-      password: analytics
-      dbname: analytics
+      user: platform
+      password: platform
+      dbname: warehouse
       schema: analytics
       port: 5432

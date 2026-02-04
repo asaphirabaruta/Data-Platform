@@ -37,6 +37,7 @@ services:
   dbt:
     build: ./dbt
     depends_on: [postgres]
+    command: ["run"]
 
   # ml:
   #   build: ./ml
@@ -44,17 +45,30 @@ services:
 
   loki:
     image: grafana/loki:2.9.0
+    container_name: loki
     ports:
       - "3101:3100"
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./observability/loki/config.yml:/etc/loki/config.yml
+      - ./observability/loki/data:/loki
+      - ./observability/loki/data/wal:/wal
 
   promtail:
     image: grafana/promtail:2.9.0
+    container_name: promtail
     volumes:
-      - ./observability/promtail-config.yml:/etc/promtail/config.yml
+      - ./observability/promtail/config.yml:/etc/promtail/config.yml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
     command: -config.file=/etc/promtail/config.yml
 
   grafana:
     image: grafana/grafana:10.2.0
+    container_name: grafana
     ports:
       - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_LOGS_ENABLED=true
